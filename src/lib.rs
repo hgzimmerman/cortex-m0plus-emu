@@ -155,6 +155,8 @@ pub enum Instruction {
     NOP,
     ADD(LowRegisterIdent, LowRegisterIdent, LowRegisterOrI8Ident),
     ADDS(LowRegisterIdent, LowRegisterIdent, LowRegisterOrI8Ident),
+    MOV(LowRegisterIdent, LowRegisterOrI8Ident),
+    MOVS(LowRegisterIdent, LowRegisterOrI8Ident)
 }
 
 
@@ -190,6 +192,20 @@ impl Machine {
                 // if the two biggest bits in each register are 1, then the resulting add should overflow
                 self.set_psr_carry(lhs_register.0 & Self::MASK_31 > 0 && rhs_register.0 & Self::MASK_31 > 0); // useful for unsigned
             }
+            Instruction::MOV(dest, src) => {
+                let source_value = self.get_value((*src).into());
+                let dest_register = self.get_register_ref((*dest).into());
+                dest_register.set(source_value.0);
+            }
+            Instruction::MOVS(dest, src) => {
+                let source_value: u32 = self.get_value((*src).into()).0;
+                {
+                    let dest_register = self.get_register_ref((*dest).into());
+                    dest_register.set(source_value);
+                }
+                self.set_psr_negative(source_value & Self::MASK_31 > 0 );
+                self.set_psr_zero(source_value == 0)
+            }
         }
 
         // Increment the program counter
@@ -197,6 +213,8 @@ impl Machine {
         self.program_counter.set(u32::wrapping_add(pc_value, 1));
     }
 
+    /// Gets the value of a register, this will act independently of the stored value.
+    /// It is non-mutating.
     fn get_value(&self, ident: RegisterIdent) -> Word {
         match ident {
             RegisterIdent::R0 => self.r0,
@@ -220,6 +238,7 @@ impl Machine {
         }
     }
 
+    /// Gets a mutable reference to the register, so that it may be modified directly.
     fn get_register_ref(&mut self, ident: RegisterIdent) -> &mut Word {
         match ident {
             RegisterIdent::R0 => &mut self.r0,
@@ -248,43 +267,48 @@ impl Machine {
     /// Second-leftmost bit
     const MASK_30: u32 = 0x40_00_00_00;
 
-    /// 31st bit
+    const MASK_29: u32 = 0x20_00_00_00;
+
+    const MASK_28: u32 = 0x10_00_00_00;
+
     const N_MASK: u32 = Self::MASK_31;
-    /// 30th bit
     const Z_MASK: u32 = Self::MASK_30;
-    /// 29th bit
-    const C_MASK: u32 = 0x02_00_00_00;
-    /// 28th bit
-    const O_MASK: u32 = 0x01_00_00_00;
+    const C_MASK: u32 = Self::MASK_29;
+    const O_MASK: u32 = Self::MASK_28;
 
 
     const FULL_MASK: u32 = 0xFF_FF_FF_FF;
     /// The previous result was negative
+    #[inline(always)]
     fn psr_negative(&self) -> bool {
         self.program_status_register.0 & Self::N_MASK > 0
     }
 
+    #[inline(always)]
     fn psr_zero(&self) -> bool {
         self.program_status_register.0 & Self::Z_MASK > 0
     }
 
+    #[inline(always)]
     fn psr_carry(&self) -> bool {
         self.program_status_register.0 & Self::C_MASK > 0
     }
 
+    #[inline(always)]
     fn psr_overflow(&self) -> bool {
         self.program_status_register.0 & Self::O_MASK > 0
     }
 
+    #[inline(always)]
     fn set_psr_negative(&mut self, value: bool) {
         if value {
             self.program_status_register.0 |= Self::N_MASK // set the bit to 1
         } else {
             self.program_status_register.0 &= Self::N_MASK ^ Self::FULL_MASK // set the bit to 0
         }
-
     }
 
+    #[inline(always)]
     fn set_psr_zero(&mut self, value: bool) {
         if value {
             self.program_status_register.0 |= Self::Z_MASK
@@ -293,6 +317,7 @@ impl Machine {
         }
     }
 
+    #[inline(always)]
     fn set_psr_carry(&mut self, value: bool) {
         if value {
             self.program_status_register.0 |= Self::C_MASK
@@ -301,6 +326,7 @@ impl Machine {
         }
     }
 
+    #[inline(always)]
     fn set_psr_overflow(&mut self, value: bool) {
         if value {
             self.program_status_register.0 |= Self::O_MASK
