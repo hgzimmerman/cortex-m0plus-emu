@@ -9,9 +9,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5d3b7649-38f1-4e42-9053-04e102a7b46c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
-    </list>
+    <list default="true" id="5d3b7649-38f1-4e42-9053-04e102a7b46c" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,8 +53,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/lib.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1484">
-              <caret line="207" selection-start-line="207" selection-end-line="207" />
+            <state relative-caret-position="391">
+              <caret line="158" column="47" selection-start-line="158" selection-start-column="47" selection-end-line="158" selection-end-column="47" />
               <folding>
                 <element signature="e#9386#9387#0" expanded="true" />
                 <element signature="e#9450#9451#0" expanded="true" />
@@ -153,16 +151,15 @@
       <updated>1536272835454</updated>
       <workItem from="1536272836732" duration="3164000" />
       <workItem from="1536336891982" duration="9593000" />
-      <workItem from="1536772653301" duration="2331000" />
+      <workItem from="1536772653301" duration="3481000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="15088000" />
+    <option name="totallyTimeSpent" value="16238000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="25" width="1920" height="1055" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18463181" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -194,8 +191,8 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1484">
-          <caret line="207" selection-start-line="207" selection-end-line="207" />
+        <state relative-caret-position="391">
+          <caret line="158" column="47" selection-start-line="158" selection-start-column="47" selection-end-line="158" selection-end-column="47" />
           <folding>
             <element signature="e#9386#9387#0" expanded="true" />
             <element signature="e#9450#9451#0" expanded="true" />

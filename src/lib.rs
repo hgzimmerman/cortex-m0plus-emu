@@ -1,4 +1,13 @@
 use std::u32;
+mod instruction;
+mod register;
+mod label;
+mod word;
+use instruction::Instruction;
+use register::*;
+use label::NumLabel;
+use word::Word;
+
 
 #[derive(Clone,)]
 pub struct Machine {
@@ -53,110 +62,6 @@ impl Default for Machine {
 
         }
     }
-}
-
-#[derive(Default,Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct Word(u32);
-
-impl Word {
-    fn set(&mut self, value: u32) {
-        self.0 = value;
-    }
-}
-
-#[derive(Default,Debug, Clone, Copy, PartialEq)]
-pub struct NumLabel(u32);
-
-/// Superset of all register combinations
-#[derive(Clone, Copy, Debug)]
-pub enum RegisterIdent {
-    R0,
-    R1,
-    R2,
-    R3,
-    R4,
-    R5,
-    R6,
-    R7,
-    R8,
-    R9,
-    R10,
-    R11,
-    R12,
-    StackRegister,
-    LinkRegister,
-    ProgramCounter,
-    Word(u32),
-    Ident(NumLabel)
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum LowRegisterIdent {
-    R0,
-    R1,
-    R2,
-    R3,
-    R4,
-    R5,
-    R6,
-    R7
-}
-
-impl Into<RegisterIdent> for LowRegisterIdent {
-    fn into(self) -> RegisterIdent {
-        match self {
-            LowRegisterIdent::R0 => RegisterIdent::R0,
-            LowRegisterIdent::R1 => RegisterIdent::R1,
-            LowRegisterIdent::R2 => RegisterIdent::R2,
-            LowRegisterIdent::R3 => RegisterIdent::R3,
-            LowRegisterIdent::R4 => RegisterIdent::R4,
-            LowRegisterIdent::R5 => RegisterIdent::R5,
-            LowRegisterIdent::R6 => RegisterIdent::R6,
-            LowRegisterIdent::R7 => RegisterIdent::R7
-        }
-    }
-}
-#[derive(Clone, Copy, Debug)]
-pub enum LowRegisterOrI8Ident {
-    R0,
-    R1,
-    R2,
-    R3,
-    R4,
-    R5,
-    R6,
-    R7,
-    I8(u8),
-    Ident(NumLabel)
-}
-
-impl Into<RegisterIdent> for LowRegisterOrI8Ident {
-    fn into(self) -> RegisterIdent {
-        match self {
-            LowRegisterOrI8Ident::R0 => RegisterIdent::R0,
-            LowRegisterOrI8Ident::R1 => RegisterIdent::R1,
-            LowRegisterOrI8Ident::R2 => RegisterIdent::R2,
-            LowRegisterOrI8Ident::R3 => RegisterIdent::R3,
-            LowRegisterOrI8Ident::R4 => RegisterIdent::R4,
-            LowRegisterOrI8Ident::R5 => RegisterIdent::R5,
-            LowRegisterOrI8Ident::R6 => RegisterIdent::R6,
-            LowRegisterOrI8Ident::R7 => RegisterIdent::R7,
-            LowRegisterOrI8Ident::I8(byte) => RegisterIdent::Word(byte as u32),
-            LowRegisterOrI8Ident::Ident(label) => RegisterIdent::Ident(label)
-
-        }
-    }
-}
-
-// TODO what about directives?
-// TODO could this be represented as bytecode? Just an into/from -> [u8; 4] w/ a statemachine to read it?
-#[derive(Clone, Copy, Debug)]
-pub enum Instruction {
-    NOP,
-    ADD(LowRegisterIdent, LowRegisterIdent, LowRegisterOrI8Ident),
-    ADDS(LowRegisterIdent, LowRegisterIdent, LowRegisterOrI8Ident),
-    MOV(LowRegisterIdent, LowRegisterOrI8Ident),
-    MOVS(LowRegisterIdent, LowRegisterOrI8Ident)
 }
 
 
