@@ -59,7 +59,9 @@ pub enum LowRegisterOrI8Ident {
     R5,
     R6,
     R7,
+    /// A byte is allowed to be used
     I8(u8),
+    /// A label may be used to reference another var
     Ident(NumLabel)
 }
 

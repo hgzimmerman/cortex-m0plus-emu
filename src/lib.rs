@@ -33,7 +33,7 @@ pub struct Machine {
     // Memory regions
     ram: Box<[u8; 256]>, // TODO, determine how much memory this should have
     rom_consts: Box<[u32; 256]>, // TODO likewise
-    rom_instructions: Box<[Instruction; 256]> // TODO likewise; Also, should there be a bit-representation for instructions?
+    rom_instructions: Box<[Instruction; 256]> // TODO likewise; Q: should there be a bit-representation for instructions? A: Yeet
 }
 
 impl Default for Machine {
@@ -242,3 +242,45 @@ impl Machine {
 
 }
 
+#[test]
+fn movs_works() {
+    let mut machine = Machine::default();
+    let mov = Instruction::MOVS(LowRegisterIdent::R0, LowRegisterOrI8Ident::I8(20));
+    machine.process_instruction(&mov);
+
+    assert_eq!(machine.r0.0 , 20);
+    assert!(!machine.psr_negative());
+    assert!(!machine.psr_carry());
+    assert!(!machine.psr_overflow());
+    assert!(!machine.psr_zero());
+}
+
+#[test]
+fn movs_zero() {
+    let mut machine = Machine::default();
+    let mov = Instruction::MOVS(LowRegisterIdent::R0, LowRegisterOrI8Ident::I8(0));
+    machine.process_instruction(&mov);
+
+    assert_eq!(machine.r0.0 , 0);
+    assert!(!machine.psr_negative());
+    assert!(!machine.psr_carry());
+    assert!(!machine.psr_overflow());
+    assert!(machine.psr_zero());
+}
+
+#[test]
+fn adds_works() {
+    let mut machine = Machine::default();
+    const LHS: u8 = 20;
+    const RHS: u8 = 15;
+    let mov = Instruction::MOVS(LowRegisterIdent::R0, LowRegisterOrI8Ident::I8(LHS));
+    let adds = Instruction::ADDS(LowRegisterIdent::R0, LowRegisterIdent::R0, LowRegisterOrI8Ident::I8(RHS));
+    machine.process_instruction(&mov);
+    machine.process_instruction(&adds);
+
+    assert_eq!(machine.r0.0 , (LHS + RHS) as u32);
+    assert!(!machine.psr_negative());
+    assert!(!machine.psr_carry());
+    assert!(!machine.psr_overflow());
+    assert!(!machine.psr_zero());
+}
