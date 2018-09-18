@@ -32,9 +32,13 @@ pub struct Machine {
     r10: Word,
     r11: Word,
     r12: Word,
+    /// Also known as R13
     stack_pointer: Word, // points to an area of memory that contains data used for scratch space/ stack information.
+    /// Also known as R14
     link_register: Word, // holds address of the current address +1 when BL (Branch+Link) is called, so BX can restore it.
-    program_counter: Word, // counts number of instructions
+    /// Also known as R15
+    program_counter: Word, // counts number of instructions run
+    /// Also known as R16
     program_status_register: Word,
     // Memory regions
     ram: Box<[u8; 256]>, // TODO, determine how much memory this should have
@@ -109,6 +113,8 @@ impl Machine {
             Instruction::AddsImmediate8(src_dest, immediate) => self.add(src_dest, src_dest, &(*immediate).into(), true),
             Instruction::Sub(dest, lhs, rhs) => self.sub(dest, lhs, &(*rhs).into(), false),
             Instruction::Subs(dest, lhs, rhs) => self.sub(dest, lhs, &(*rhs).into(), true),
+            Instruction::SubImmediate8(src_dest, immediate) => self.sub(src_dest, src_dest, &(*immediate).into(), false),
+            Instruction::SubsImmediate8(src_dest, immediate) => self.sub(src_dest, src_dest, &(*immediate).into(), true),
             Instruction::Rsbs(dest, src, _zero) => self.rsb(dest, src),
             Instruction::Mov(dest, src) => self.mov(dest, &(*src).into(), false),
             Instruction::Movs(dest, src) => self.mov(dest, &(*src).into(), true),
@@ -138,13 +144,14 @@ impl Machine {
             let dest_register = self.get_value((*dest).into());
             self.set_psr_zero(dest_register.0 == 0);
             self.set_psr_negative(dest_register.0 & Self::MASK_31 > 0);
-            // If the two biggest _unsigned_ bits are 1 then the result will overflow into the signed bit area
-            self.set_psr_overflow(lhs_register.0 & Self::MASK_30 > 0 && rhs_register.0 & Self::MASK_30 > 0); // useful for signed
-            // if the two biggest bits in each register are 1, then the resulting add should overflow
-            self.set_psr_carry(lhs_register.0 & Self::MASK_31 > 0 && rhs_register.0 & Self::MASK_31 > 0); // useful for unsigned
+            let operands_same_sign = lhs_register.0 & Self::MASK_31 > 0 && rhs_register.0 & Self::MASK_31 > 0;
+            self.set_psr_overflow( (dest_register.0 & Self::MASK_31 > 0) != operands_same_sign); // useful for signed
+            let c = lhs_register.0 as u64 + rhs_register.0 as u64 > u32::MAX as u64;
+            self.set_psr_carry(c);
         }
     }
 
+    /// Implementation of compare
     fn cmp(&mut self, basis: &LowRegisterIdent, compare: &LowRegisterOrI8Ident) {
         let basis_value = self.get_value((*basis).into());
         let compare_value = self.get_value((*compare).into());
@@ -154,6 +161,7 @@ impl Machine {
         self.set_psr_negative(value & Self::MASK_31 > 0);
     }
 
+    /// Implementation of subtraction
     fn sub(&mut self, dest: &LowRegisterIdent, lhs: &LowRegisterIdent, rhs: &LowRegisterOrI8Ident, s: bool) {
         let lhs_register =  self.get_value((*lhs).into());
         let rhs_register = self.get_value((*rhs).into());
@@ -167,9 +175,9 @@ impl Machine {
             self.set_psr_zero(dest_register.0 == 0);
             self.set_psr_negative(dest_register.0 & Self::MASK_31 > 0);
             // If the two biggest _unsigned_ bits are 1 then the result will overflow into the signed bit area
-            self.set_psr_overflow(lhs_register.0 & Self::MASK_30 > 0 && rhs_register.0 & Self::MASK_30 > 0); // useful for signed // TODO LIKELY WRONG
+            self.set_psr_overflow((dest_register.0 < lhs_register.0) != (dest_register.0 > rhs_register.0)); // useful for signed
             // if the two biggest bits in each register are 1, then the resulting add should overflow
-            self.set_psr_carry(lhs_register.0 & Self::MASK_31 > 0 && rhs_register.0 & Self::MASK_31 > 0); // useful for unsigned // TODO LIKELY WRONG
+            self.set_psr_carry(rhs_register.0 > lhs_register.0);
         }
     }
 
@@ -198,10 +206,6 @@ impl Machine {
         let dest_register = self.get_value((*dest).into());
         self.set_psr_zero(dest_register.0 == 0);
         self.set_psr_negative(dest_register.0 & Self::MASK_31 > 0);
-        // If the two biggest _unsigned_ bits are 1 then the result will overflow into the signed bit area
-//                self.set_psr_overflow(src_register.0 & Self::MASK_30 > 0 && rhs_register.0 & Self::MASK_30 > 0); // useful for signed // TODO IMPLEMENT ME
-        // if the two biggest bits in each register are 1, then the resulting add should overflow
-//                self.set_psr_carry(src_register.0 & Self::MASK_31 > 0 && rhs_register.0 & Self::MASK_31 > 0); // useful for unsigned // TODO IMPLEMENT ME
     }
 
     /// Gets the value of a register, this will act independently of the stored value.
@@ -368,5 +372,56 @@ fn adds_works() {
     assert!(!machine.psr_negative());
     assert!(!machine.psr_carry());
     assert!(!machine.psr_overflow());
+    assert!(!machine.psr_zero());
+}
+
+#[test]
+fn adds_carry() {
+    let mut machine = Machine::default();
+    machine.r0 = Word(u32::MAX); // Set the R0 to be 1111_..._1111
+    const RHS: u8 = 15;
+    let adds = Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(RHS));
+    machine.process_instruction(&adds);
+
+    assert_eq!(machine.r0.0 , (RHS - 1) as u32);
+    assert!(!machine.psr_negative());
+    assert!(machine.psr_carry());
+    assert!(!machine.psr_overflow());
+    assert!(!machine.psr_zero());
+}
+
+#[test]
+fn adds_overflow() {
+    let mut machine = Machine::default();
+    machine.r0 = Word(u32::MAX >> 1); // Set the R0 to be 1111_..._1111
+    const RHS: u8 = 15;
+    let adds = Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(RHS));
+    machine.process_instruction(&adds);
+
+//    assert_eq!(machine.r0.0 , (RHS - 1) as u32);
+    assert!(machine.psr_negative());
+    assert!(!machine.psr_carry());
+    assert!(machine.psr_overflow());
+    assert!(!machine.psr_zero());
+}
+
+
+
+#[test]
+fn subs_works() {
+    let mut machine = Machine::default();
+    const LHS: u8 = 15;
+    const RHS: u8 = 20;
+    let mov = Instruction::MovsImmediate8(LowRegisterIdent::R0, LHS.into());
+    let subs = Instruction::SubsImmediate8(LowRegisterIdent::R0, Immediate8(RHS));
+
+    machine.process_instruction(&mov);
+    machine.process_instruction(&subs);
+
+
+    assert_eq!(machine.r0.0 as i32 , (u32::wrapping_sub(LHS as u32, RHS as u32)) as i32);
+    assert!(machine.psr_negative());
+    assert!(machine.psr_overflow());
+    assert!(machine.psr_carry());
     assert!(!machine.psr_zero());
 }

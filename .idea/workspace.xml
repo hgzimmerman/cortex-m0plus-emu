@@ -10,11 +10,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5d3b7649-38f1-4e42-9053-04e102a7b46c" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/instruction.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/instruction.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/register.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/register.rs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -59,26 +58,47 @@
         </counts>
       </usages-collector>
     </session>
+    <session id="-1870425883">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="2" />
+          <entry key="project.open.time.3" value="1" />
+          <entry key="project.open.time.6" value="1" />
+          <entry key="project.open.time.7" value="1" />
+          <entry key="project.opened" value="3" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="rs" value="1" />
+          <entry key="toml" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="Rust" value="1" />
+          <entry key="TOML file" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="rs" value="1429" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="Rust" value="1429" />
+        </counts>
+      </usages-collector>
+    </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/lib.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="375">
-              <caret line="76" selection-start-line="76" selection-end-line="76" />
-              <folding>
-                <element signature="e#2216#2217#0" expanded="true" />
-                <element signature="e#2247#2248#0" expanded="true" />
-                <element signature="e#10963#10964#0" expanded="true" />
-                <element signature="e#11027#11028#0" expanded="true" />
-                <element signature="e#11083#11084#0" expanded="true" />
-                <element signature="e#11147#11148#0" expanded="true" />
-                <element signature="e#11204#11205#0" expanded="true" />
-                <element signature="e#11268#11269#0" expanded="true" />
-                <element signature="e#11328#11329#0" expanded="true" />
-                <element signature="e#11392#11393#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="-3385">
+              <caret line="147" column="74" selection-start-line="147" selection-start-column="74" selection-end-line="147" selection-end-column="74" />
             </state>
           </provider>
         </entry>
@@ -88,10 +108,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="60">
               <caret line="4" column="8" selection-start-line="4" selection-start-column="8" selection-end-line="4" selection-end-column="8" />
-              <folding>
-                <element signature="e#138#139#0" expanded="true" />
-                <element signature="e#168#169#0" expanded="true" />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -108,12 +124,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/instruction.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="361">
-              <caret line="50" column="19" selection-start-line="50" selection-start-column="19" selection-end-line="50" selection-end-column="19" />
-              <folding>
-                <element signature="e#1772#1773#0" expanded="true" />
-                <element signature="e#1803#1804#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="185">
+              <caret line="24" column="49" selection-start-line="24" selection-start-column="49" selection-end-line="24" selection-end-column="49" />
             </state>
           </provider>
         </entry>
@@ -130,14 +142,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/register.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="556">
-              <caret line="146" column="24" selection-start-line="146" selection-start-column="24" selection-end-line="146" selection-end-column="24" />
-              <folding>
-                <element signature="e#4039#4040#0" expanded="true" />
-                <element signature="e#4080#4081#0" expanded="true" />
-                <element signature="e#4150#4151#0" expanded="true" />
-                <element signature="e#4175#4176#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="-100">
+              <caret line="106" column="35" selection-start-line="106" selection-start-column="35" selection-end-line="106" selection-end-column="35" />
             </state>
           </provider>
         </entry>
@@ -239,16 +245,19 @@
       <workItem from="1536772653301" duration="9130000" />
       <workItem from="1536880826365" duration="6969000" />
       <workItem from="1536937370664" duration="6785000" />
+      <workItem from="1537109513655" duration="33000" />
+      <workItem from="1537109561839" duration="726000" />
+      <workItem from="1537110327968" duration="8593000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="35641000" />
+    <option name="totallyTimeSpent" value="44993000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="25" width="1920" height="1055" extended-state="6" />
+    <frame x="0" y="0" width="1920" height="1063" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18890075" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.1456777" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -259,8 +268,8 @@
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.31027028" />
+      <window_info anchor="bottom" id="Version Control" order="8" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.3105263" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -276,6 +285,13 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/word.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" column="8" selection-start-line="4" selection-start-column="8" selection-end-line="4" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/label.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="15">
@@ -290,57 +306,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/word.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="4" column="8" selection-start-line="4" selection-start-column="8" selection-end-line="4" selection-end-column="8" />
-          <folding>
-            <element signature="e#138#139#0" expanded="true" />
-            <element signature="e#168#169#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/register.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="556">
-          <caret line="146" column="24" selection-start-line="146" selection-start-column="24" selection-end-line="146" selection-end-column="24" />
-          <folding>
-            <element signature="e#4039#4040#0" expanded="true" />
-            <element signature="e#4080#4081#0" expanded="true" />
-            <element signature="e#4150#4151#0" expanded="true" />
-            <element signature="e#4175#4176#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="-100">
+          <caret line="106" column="35" selection-start-line="106" selection-start-column="35" selection-end-line="106" selection-end-column="35" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/instruction.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="50" column="19" selection-start-line="50" selection-start-column="19" selection-end-line="50" selection-end-column="19" />
-          <folding>
-            <element signature="e#1772#1773#0" expanded="true" />
-            <element signature="e#1803#1804#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="185">
+          <caret line="24" column="49" selection-start-line="24" selection-start-column="49" selection-end-line="24" selection-end-column="49" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="76" selection-start-line="76" selection-end-line="76" />
-          <folding>
-            <element signature="e#2216#2217#0" expanded="true" />
-            <element signature="e#2247#2248#0" expanded="true" />
-            <element signature="e#10963#10964#0" expanded="true" />
-            <element signature="e#11027#11028#0" expanded="true" />
-            <element signature="e#11083#11084#0" expanded="true" />
-            <element signature="e#11147#11148#0" expanded="true" />
-            <element signature="e#11204#11205#0" expanded="true" />
-            <element signature="e#11268#11269#0" expanded="true" />
-            <element signature="e#11328#11329#0" expanded="true" />
-            <element signature="e#11392#11393#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="-3385">
+          <caret line="147" column="74" selection-start-line="147" selection-start-column="74" selection-end-line="147" selection-end-column="74" />
         </state>
       </provider>
     </entry>

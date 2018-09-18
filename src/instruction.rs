@@ -21,6 +21,8 @@ pub enum Instruction {
     AddsImmediate8(LowRegisterIdent, Immediate8),
     Sub(LowRegisterIdent, LowRegisterIdent, LowRegisterIdent),
     Subs(LowRegisterIdent, LowRegisterIdent, LowRegisterIdent),
+    SubImmediate8(LowRegisterIdent, Immediate8),
+    SubsImmediate8(LowRegisterIdent, Immediate8),
     Rsbs(LowRegisterIdent, LowRegisterIdent, Zero),
     Mov(LowRegisterIdent, LowRegisterIdent),
     Movs(LowRegisterIdent, LowRegisterIdent),
