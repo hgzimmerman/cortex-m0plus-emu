@@ -25,7 +25,7 @@ pub enum RegisterIdent {
 //    Ident(NumLabel)
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LowRegisterIdent {
     R0,
     R1,
@@ -74,6 +74,30 @@ impl Immediate8 {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Immediate11(pub u16);
+impl Immediate11 {
+    /// Sets bits in a bitvector to encode the value of the immediate 11.
+    #[inline(always)]
+    pub fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
+        let bv = BitVec::from_bytes(&::util::u16_to_u8array(self.0));
+        (offset..offset + 11).enumerate().for_each(|(index,bit_index)| {
+            bit_vec.set(index + offset, bv.get(bit_index).expect("Should be inbounds"));
+        });
+    }
+    pub fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self {
+        let mut target = Immediate11(0);
+        (offset..offset + 11).enumerate().for_each(|(target_index, index)| {
+            if let Some(bit) = bit_vec.get(index) {
+                if bit {
+                    target.0 |= ::util::u16_bit_select_mask(10 - target_index as u8)
+                }
+            }
+        });
+        target
+    }
+}
+
 impl Into<RegisterIdent> for LowRegisterIdent {
     fn into(self) -> RegisterIdent {
         match self {
@@ -88,7 +112,7 @@ impl Into<RegisterIdent> for LowRegisterIdent {
         }
     }
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LowRegisterOrI8Ident {
     R0,
     R1,
@@ -148,5 +172,5 @@ impl From<u8> for Immediate8 {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Zero;

@@ -1,3 +1,4 @@
+#![feature(reverse_bits)]
 
 extern crate bit_vec;
 
@@ -6,12 +7,15 @@ mod instruction;
 mod register;
 mod label;
 mod word;
+mod util;
 use instruction::Instruction;
 use register::*;
 use label::NumLabel;
 use word::Word;
 use bit_vec::BitVec;
 use std::ops::Index;
+use word::OpResult;
+
 
 const INSTRUCTIONS_SIZE: usize = 256;
 
@@ -44,7 +48,6 @@ pub struct Machine {
     ram: Box<[u8; 256]>, // TODO, determine how much memory this should have
     rom_consts: Box<[u32; 256]>, // TODO likewise
     rom_instructions: Box<[u8; 256]>, // TODO likewise; Q: should there be a bit-representation for instructions? A: Yeet
-    instruction_index: u32
 }
 
 impl Default for Machine {
@@ -70,8 +73,6 @@ impl Default for Machine {
             ram: Box::new([0; 256]),
             rom_consts: Box::new([0; 256]),
             rom_instructions: Box::new([0; INSTRUCTIONS_SIZE]),
-            instruction_index: 0
-
         }
     }
 }
@@ -88,14 +89,14 @@ impl Machine {
     pub fn run(&mut self) {
         loop {
             // Read 4 bytes (one word) into a bitvec.
-            let byte1 = self.rom_instructions[self.instruction_index as usize];
-            self.instruction_index += 1;
-            let byte2 = self.rom_instructions[self.instruction_index as usize];
-            self.instruction_index += 1;
-            let byte3 = self.rom_instructions[self.instruction_index as usize];
-            self.instruction_index += 1;
-            let byte4 = self.rom_instructions[self.instruction_index as usize];
-            self.instruction_index += 1;
+            let byte1 = self.rom_instructions[self.program_counter.0 as usize];
+            self.program_counter.0 += 1;
+            let byte2 = self.rom_instructions[self.program_counter.0 as usize];
+            self.program_counter.0 += 1;
+            let byte3 = self.rom_instructions[self.program_counter.0 as usize];
+            self.program_counter.0 += 1;
+            let byte4 = self.rom_instructions[self.program_counter.0 as usize];
+            self.program_counter.0 += 1;
             let bv = BitVec::from_bytes(&[byte1, byte2, byte3, byte4]);
 
             let instruction= Instruction::from(bv); // TODO, convert to try_from
@@ -121,33 +122,20 @@ impl Machine {
             Instruction::MovImmediate8(dest, immediate) => self.mov(dest, &(*immediate).into(), false),
             Instruction::MovsImmediate8(dest, immediate) => self.mov(dest, &(*immediate).into(), true),
             Instruction::Cmp(basis, compare) => self.cmp(basis, &(*compare).into()),
-            Instruction::B(address) => {
-                unimplemented!()
-            }
+            Instruction::B(address) => self.branch_11(address),
         }
-
-        // Increment the program counter
-        let pc_value = self.program_counter.clone().0;
-        self.program_counter.set(u32::wrapping_add(pc_value, 1));
     }
 
     /// Generic implementation of ADD instruction
     fn add(&mut self, dest: &LowRegisterIdent, lhs: &LowRegisterIdent, rhs: &LowRegisterOrI8Ident, s: bool) {
         let lhs_register =  self.get_value((*lhs).into());
         let rhs_register = self.get_value((*rhs).into());
-        {
-            let dest_register = self.get_register_ref((*dest).into());
-            dest_register.set(u32::wrapping_add(lhs_register.0, rhs_register.0));
-        }
+        let r = lhs_register + rhs_register;
+
+        self.get_register_mut((*dest).into()).set_word(r.word);
 
         if s {
-            let dest_register = self.get_value((*dest).into());
-            self.set_psr_zero(dest_register.0 == 0);
-            self.set_psr_negative(dest_register.0 & Self::MASK_31 > 0);
-            let operands_same_sign = lhs_register.0 & Self::MASK_31 > 0 && rhs_register.0 & Self::MASK_31 > 0;
-            self.set_psr_overflow( (dest_register.0 & Self::MASK_31 > 0) != operands_same_sign); // useful for signed
-            let c = lhs_register.0 as u64 + rhs_register.0 as u64 > u32::MAX as u64;
-            self.set_psr_carry(c);
+           self.set_psr_all(&r)
         }
     }
 
@@ -165,31 +153,20 @@ impl Machine {
     fn sub(&mut self, dest: &LowRegisterIdent, lhs: &LowRegisterIdent, rhs: &LowRegisterOrI8Ident, s: bool) {
         let lhs_register =  self.get_value((*lhs).into());
         let rhs_register = self.get_value((*rhs).into());
-        {
-            let dest_register = self.get_register_ref((*dest).into());
-            dest_register.set(u32::wrapping_sub(lhs_register.0, rhs_register.0));
-        }
+        let r = lhs_register - rhs_register;
+        self.get_register_mut((*dest).into()).set_word(r.word);
 
         if s {
-            let dest_register = self.get_value((*dest).into());
-            self.set_psr_zero(dest_register.0 == 0);
-            self.set_psr_negative(dest_register.0 & Self::MASK_31 > 0);
-            // If the two biggest _unsigned_ bits are 1 then the result will overflow into the signed bit area
-            self.set_psr_overflow((dest_register.0 < lhs_register.0) != (dest_register.0 > rhs_register.0)); // useful for signed
-            // if the two biggest bits in each register are 1, then the resulting add should overflow
-            self.set_psr_carry(rhs_register.0 > lhs_register.0);
+            self.set_psr_all(&r)
         }
     }
 
     /// Generic implementation of MOV instruction
     fn mov(&mut self, dest: &LowRegisterIdent, src: &LowRegisterOrI8Ident, s: bool) {
         let source_value: u32 = self.get_value((*src).into()).0;
-        {
-            let dest_register = self.get_register_ref((*dest).into());
-            dest_register.set(source_value);
-        }
+        self.get_register_mut((*dest).into()).set(source_value);
         if s {
-            self.set_psr_negative(source_value & Self::MASK_31 > 0 );
+            self.set_psr_negative(source_value & Word::MASK_31 > 0 );
             self.set_psr_zero(source_value == 0)
         }
     }
@@ -199,14 +176,20 @@ impl Machine {
     fn rsb(&mut self, dest: &LowRegisterIdent, src: &LowRegisterIdent) {
         let src_register = self.get_value((*src).into());
         {
-            let dest_register = self.get_register_ref((*dest).into());
+            let dest_register = self.get_register_mut((*dest).into());
             dest_register.set(u32::wrapping_sub(0, src_register.0));
         }
 
         let dest_register = self.get_value((*dest).into());
         self.set_psr_zero(dest_register.0 == 0);
-        self.set_psr_negative(dest_register.0 & Self::MASK_31 > 0);
+        self.set_psr_negative(dest_register.0 & Word::MASK_31 > 0);
     }
+
+    fn branch_11(&mut self, address: &Immediate11) {
+        let address: u32 = address.0 as u32;
+        self.program_counter.0 = address;
+    }
+
 
     /// Gets the value of a register, this will act independently of the stored value.
     /// It is non-mutating.
@@ -234,7 +217,7 @@ impl Machine {
     }
 
     /// Gets a mutable reference to the register, so that it may be modified directly.
-    fn get_register_ref(&mut self, ident: RegisterIdent) -> &mut Word {
+    fn get_register_mut(&mut self, ident: RegisterIdent) -> &mut Word {
         match ident {
             RegisterIdent::R0 => &mut self.r0,
             RegisterIdent::R1 => &mut self.r1,
@@ -273,6 +256,16 @@ impl Machine {
 
 
     const FULL_MASK: u32 = 0xFF_FF_FF_FF;
+
+
+    fn set_psr_all(&mut self, op_result: &OpResult) {
+        self.set_psr_carry(op_result.carry);
+        self.set_psr_overflow(op_result.overflow);
+        self.set_psr_zero(op_result.word.0 == 0);
+        self.set_psr_negative(op_result.word.0 & Word::MASK_31 > 0)
+    }
+
+
     /// The previous result was negative
     #[inline(always)]
     fn psr_negative(&self) -> bool {
@@ -422,6 +415,15 @@ fn subs_works() {
     assert_eq!(machine.r0.0 as i32 , (u32::wrapping_sub(LHS as u32, RHS as u32)) as i32);
     assert!(machine.psr_negative());
     assert!(machine.psr_overflow());
-    assert!(machine.psr_carry());
+    assert!(!machine.psr_carry());
     assert!(!machine.psr_zero());
+}
+
+#[test]
+fn basic_branch() {
+    let mut machine = Machine::default();
+    let i11 = Immediate11(24);
+
+    machine.process_instruction(&Instruction::B(i11));
+    assert_eq!(machine.program_counter.0, 24)
 }
