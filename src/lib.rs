@@ -1,4 +1,5 @@
 #![feature(reverse_bits)]
+#![feature(try_from)]
 
 extern crate bit_vec;
 
@@ -15,7 +16,7 @@ use word::Word;
 use bit_vec::BitVec;
 use std::ops::Index;
 use word::OpResult;
-
+use std::convert::TryFrom;
 
 const INSTRUCTIONS_SIZE: usize = 256;
 
@@ -109,6 +110,11 @@ impl Machine {
 
     pub fn run(&mut self) {
         loop {
+            // Avoid index out of bounds
+            if self.program_counter.0 + 3 > INSTRUCTIONS_SIZE as u32 {
+                println!("program counter out of bounds, ceasing operation");
+                break
+            }
             // Read 4 bytes (one word) into a bitvec.
             let byte1 = self.rom_instructions[self.program_counter.0 as usize];
             self.program_counter.0 += 1;
@@ -120,7 +126,11 @@ impl Machine {
             self.program_counter.0 += 1;
             let bv = BitVec::from_bytes(&[byte1, byte2, byte3, byte4]);
 
-            let instruction= Instruction::from(bv); // TODO, convert to try_from
+            println!("{:?}", bv);
+            let instruction = match Instruction::try_from(bv) {
+                Ok(a) => a,
+                Err(_) => break
+            };
             self.process_instruction(&instruction)
         }
     }
@@ -447,4 +457,34 @@ fn basic_branch() {
 
     machine.process_instruction(&Instruction::B(i11));
     assert_eq!(machine.program_counter.0, 24)
+}
+
+#[test]
+fn load_run_instructions() {
+    let mut machine = Machine::default();
+    let instructions: Vec<Instruction> = vec!(
+        Instruction::Nop,
+        Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(32))
+    );
+
+    machine.load_instructions(&instructions);
+    machine.run();
+
+    assert_eq!(machine.r0, Word(32))
+}
+
+#[test]
+fn load_run_instructions_1() {
+    let mut machine = Machine::default();
+    let instructions: Vec<Instruction> = vec!(
+        Instruction::MovsImmediate8(LowRegisterIdent::R1, Immediate8(10)),
+        Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(32)),
+        Instruction::Adds(LowRegisterIdent::R1, LowRegisterIdent::R1, LowRegisterIdent::R0),
+    );
+
+    machine.load_instructions(&instructions);
+    machine.run();
+
+    assert_eq!(machine.r1, Word(42));
+    assert_eq!(machine.r0, Word(32));
 }
