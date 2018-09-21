@@ -9,6 +9,8 @@ use bit_vec::BitVec;
 use register::Immediate8;
 use register::Immediate11;
 
+use register::ByteCodeEncodable;
+
 /// The naming convention will specify both non-s and s variants.
 /// Instructions without any suffixes will typically operate on registers, while those that operate on immediate values will have a suffix saying so.
 // TODO what about directives?
@@ -66,10 +68,18 @@ impl From<BitVec> for Instruction {
     fn from(bv: BitVec) -> Self {
 //        let vv: &[u8] = bv.to_bytes().as_slice();
         use util::first_bits_match;
-        if first_bits_match(bv.to_bytes().as_slice()[0], 0b11100_000, 5 ) {
+
+        let byte_0: u8 = bv.to_bytes().as_slice()[0];
+        if first_bits_match(byte_0, 0b11100_000, 5 ) {
             return Instruction::B(Immediate11::decode_from_bitvector(&bv, 5))
+        } else if first_bits_match(byte_0, 0b1011_1111, 8) {
+            return Instruction::Nop
+        } else if first_bits_match(byte_0, 0b00110_000, 5) {
+            return Instruction::AddImmediate8(LowRegisterIdent::decode_from_bitvector(&bv, 5), Immediate8::decode_from_bitvector(&bv, 8))
+        } else {
+            unimplemented!()
         }
-        unimplemented!()
+
     }
 }
 
@@ -81,4 +91,12 @@ fn encode_decode_b() {
     let i: Instruction = bv.into();
 
     assert_eq!(i, Instruction::B(Immediate11(23)));
+}
+
+#[test]
+fn encode_decode_adds() {
+    let bv: BitVec<u32>  = Instruction::AddImmediate8(LowRegisterIdent::R3,Immediate8(23)).into();
+    let i: Instruction = bv.into();
+
+    assert_eq!(i, Instruction::AddImmediate8(LowRegisterIdent::R3,Immediate8(23)));
 }

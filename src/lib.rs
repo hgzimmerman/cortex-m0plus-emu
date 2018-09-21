@@ -86,6 +86,27 @@ impl Index<usize> for Machine {
 }
 
 impl Machine {
+
+    pub fn load_instructions(&mut self, instructions: &[Instruction]) {
+        for (index, instruction) in instructions.iter().enumerate() {
+            let bv: BitVec<u32> = (*instruction).into();
+            let mut bytes = bv.to_bytes();
+            // each instruction must be 4 bytes long (32 bit word instructions) even though
+            // the instruction content may fit in 16 bits.
+            while bytes.len() < 4 {
+                bytes.push(0)
+            }
+
+
+            self.rom_instructions[index * 4] = bytes[0];
+            self.rom_instructions[index * 4 + 1] = bytes[1];
+            self.rom_instructions[index * 4 + 2] = bytes[2];
+            self.rom_instructions[index * 4 + 3] = bytes[3];
+
+        }
+    }
+
+
     pub fn run(&mut self) {
         loop {
             // Read 4 bytes (one word) into a bitvec.

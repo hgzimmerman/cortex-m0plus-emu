@@ -1,6 +1,12 @@
 use label::NumLabel;
 use bit_vec::BitVec;
 
+
+pub trait ByteCodeEncodable {
+    fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize);
+    fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self;
+}
+
 /// Superset of all register combinations
 #[derive(Clone, Copy, Debug)]
 pub enum RegisterIdent {
@@ -37,10 +43,10 @@ pub enum LowRegisterIdent {
     R7
 }
 
-impl LowRegisterIdent {
+impl ByteCodeEncodable for LowRegisterIdent {
     /// This sets bits in a bitvector to encode which low register to be represented
     #[inline(always)]
-    pub fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
+    fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
         let mut bit_1: bool = false;
         let mut bit_2: bool = false;
         let mut bit_3: bool = false;
@@ -59,38 +65,72 @@ impl LowRegisterIdent {
         bit_vec.set(offset + 1, bit_2);
         bit_vec.set(offset + 2, bit_3)
     }
+
+    fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self {
+        let bits: (bool, bool, bool) = (bit_vec.get(offset).expect("Should be inbounds"),
+                                        bit_vec.get(offset + 1).expect("Should be inbounds"),
+                                        bit_vec.get(offset + 2).expect("Should be inbounds"));
+
+        use LowRegisterIdent::*;
+        match bits {
+            (false, false, false) => R0,
+            (false, false, true) => R1,
+            (false, true, false) => R2,
+            (false, true, true) => R3,
+            (true, false, false) => R4,
+            (true, false, true) => R5,
+            (true, true, false) => R6,
+            (true, true, true) => R7
+        }
+
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Immediate8(pub u8);
-impl Immediate8 {
+impl ByteCodeEncodable for Immediate8 {
     /// Sets bits in a bitvector to encode the value of the immediate 8.
+    /// The offset specifies where to start placing bits in the bit_vec.
     #[inline(always)]
-    pub fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
+    fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
         let bv = BitVec::from_bytes(&[self.0]);
-        bv.into_iter().enumerate().for_each(|(index,bit)| {
-            bit_vec.set(index + offset, bit);
-        })
+        (0..8_usize).for_each(|index| {
+            bit_vec.set(index + offset, bv.get(index ).expect(&format!("Should be inbounds {}", index + offset)));
+        });
+    }
+    fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self {
+        let mut target = Immediate8(0);
+        (0..8_usize).for_each(|index| {
+            if let Some(bit) = bit_vec.get(index + offset) {
+                if bit {
+                    target.0 |= ::util::u8_bit_select_mask(7 - index as u8)
+                }
+            }
+        });
+        target
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Immediate11(pub u16);
-impl Immediate11 {
+impl ByteCodeEncodable for Immediate11 {
     /// Sets bits in a bitvector to encode the value of the immediate 11.
     #[inline(always)]
-    pub fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
+    fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
         let bv = BitVec::from_bytes(&::util::u16_to_u8array(self.0));
-        (offset..offset + 11).enumerate().for_each(|(index,bit_index)| {
-            bit_vec.set(index + offset, bv.get(bit_index).expect("Should be inbounds"));
+        (0..11_usize).for_each(|index| {
+            let value = bv
+                .get(index + 5 )
+                .expect(&format!("Should be inbounds {}", index + offset));
+            bit_vec.set(index + offset, value)
         });
     }
-    pub fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self {
+    fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self {
         let mut target = Immediate11(0);
-        (offset..offset + 11).enumerate().for_each(|(target_index, index)| {
-            if let Some(bit) = bit_vec.get(index) {
+        (0..11_usize).for_each(|index| {
+            if let Some(bit) = bit_vec.get(index + offset) {
                 if bit {
-                    target.0 |= ::util::u16_bit_select_mask(10 - target_index as u8)
+                    target.0 |= ::util::u16_bit_select_mask(10 - index as u8)
                 }
             }
         });

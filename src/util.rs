@@ -32,6 +32,9 @@ pub fn u16_bit_select_mask(index: u8) -> u16 {
     2u16.pow(index as u32)
 }
 
+pub fn u8_bit_select_mask(index: u8) -> u8 {
+    2u8.pow(index as u32)
+}
 
 // TODO this may be refactored for performance reasons in the future
 pub fn first_bits_match(value: u8, mask: u8, num_bits: u8) -> bool {
