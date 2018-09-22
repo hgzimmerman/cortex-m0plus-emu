@@ -12,11 +12,11 @@ use register::Immediate11;
 use register::ByteCodeEncodable;
 use std::convert::TryFrom;
 use std::convert::TryInto;
+use register::Immediate5;
 
 /// The naming convention will specify both non-s and s variants.
 /// Instructions without any suffixes will typically operate on registers, while those that operate on immediate values will have a suffix saying so.
 // TODO what about directives?
-// TODO could this be represented as bytecode? Just an into/from -> [u8; 4] w/ a statemachine to read it?
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Instruction {
     Nop,
@@ -34,6 +34,10 @@ pub enum Instruction {
     MovImmediate8(LowRegisterIdent, Immediate8),
     MovsImmediate8(LowRegisterIdent, Immediate8),
     Cmp(LowRegisterIdent, LowRegisterIdent),
+    LsrsImmediate5(LowRegisterIdent, LowRegisterIdent, Immediate5),
+    LslsImmediate5(LowRegisterIdent, LowRegisterIdent, Immediate5),
+    Lsrs(LowRegisterIdent, LowRegisterIdent),
+    Lsls(LowRegisterIdent, LowRegisterIdent),
     B(Immediate11)
 }
 
@@ -85,13 +89,67 @@ impl Into<BitVec> for Instruction {
                 immediate.encode_to_bitvector(&mut bv, 8);
                 return bv
             }
+            Subs(dest, lhs, rhs) => {
+                const ADDS_OP: u8 = 0b0001_101_0;
+                let mut bv: BitVec<u32> = BitVec::from_bytes(&[ADDS_OP, 0]);
+                rhs.encode_to_bitvector(&mut bv, 7);
+                lhs.encode_to_bitvector(&mut bv, 10);
+                dest.encode_to_bitvector(&mut bv,13);
+                return bv
+            }
+            SubsImmediate8(src_dest, immediate) => {
+                const SUBS_IMM_OP: u8 = 0b00111_000; // first 5
+                let mut bv: BitVec<u32> = BitVec::from_bytes(&[SUBS_IMM_OP, 0]);
+                src_dest.encode_to_bitvector(&mut bv, 5);
+                immediate.encode_to_bitvector(&mut bv, 8);
+                return bv
+            }
+            Rsbs(dest, src, _) => {
+                const RSBS_OP: u8 = 0b0100_0010;
+                const RSBS_OP_2: u8 = 0b01_00_0000;
+                let mut bv: BitVec<u32> = BitVec::from_bytes(&[RSBS_OP, RSBS_OP_2]);
+                src.encode_to_bitvector(&mut bv, 10);
+                dest.encode_to_bitvector(&mut bv, 13);
+                bv
+            }
+            LsrsImmediate5(dest, src, distance) => {
+                const LSRS_IMM_OP: u8 = 0b00001_000;
+                let mut bv: BitVec<u32> = BitVec::from_bytes(&[LSRS_IMM_OP, 0]);
+                distance.encode_to_bitvector(&mut bv, 5);
+                src.encode_to_bitvector(&mut bv, 10);
+                dest.encode_to_bitvector(&mut bv, 13);
+                bv
+            }
+            LslsImmediate5(dest, src, distance) => {
+                const LSRS_IMM_OP: u8 = 0b00000_000; /// MOV takes precedence if next 5 bits are 0
+                let mut bv: BitVec<u32> = BitVec::from_bytes(&[LSRS_IMM_OP, 0]);
+                distance.encode_to_bitvector(&mut bv, 5);
+                src.encode_to_bitvector(&mut bv, 10);
+                dest.encode_to_bitvector(&mut bv, 13);
+                bv
+            }
+            Lsls(src_dest, distance) => {
+                const LSLS_OP: u8 = 0b0100_0000;
+                const LSLS_OP_2: u8 = 0b10_000000;
+                let mut bv: BitVec<u32> = BitVec::from_bytes(&[LSLS_OP, LSLS_OP_2]);
+                src_dest.encode_to_bitvector(&mut bv, 10);
+                distance.encode_to_bitvector(&mut bv, 13);
+                bv
+            }
+            Lsrs(src_dest, distance) => {
+                const LSRS_OP: u8 = 0b0100_0000;
+                const LSRS_OP_2: u8 = 0b11_000000;
+                let mut bv: BitVec<u32> = BitVec::from_bytes(&[LSRS_OP, LSRS_OP_2]);
+                src_dest.encode_to_bitvector(&mut bv, 10);
+                distance.encode_to_bitvector(&mut bv, 13);
+                bv
+            }
             B(immediate_11) => {
                 const B_OP: u8 = 0b11100_000; // first 5
                 let mut bv: BitVec<u32> = BitVec::from_bytes(&[B_OP, 0]);
                 immediate_11.encode_to_bitvector(&mut bv, 5);
                 return bv
             }
-//            Add()
            _ => unimplemented!()
         }
     }
@@ -130,6 +188,45 @@ impl TryFrom<BitVec> for Instruction {
                 LowRegisterIdent::decode_from_bitvector(&bv, 13),
                 LowRegisterIdent::decode_from_bitvector(&bv, 10),
                 LowRegisterIdent::decode_from_bitvector(&bv, 7),
+            )
+        } else if first_bits_match(byte_0, 0b00111_000, 5) {
+            Instruction::SubsImmediate8(
+                LowRegisterIdent::decode_from_bitvector(&bv, 5),
+                Immediate8::decode_from_bitvector(&bv, 8)
+            )
+        } else if first_bits_match(byte_0, 0b0001_101_0, 7) {
+            Instruction::Subs(
+                LowRegisterIdent::decode_from_bitvector(&bv, 13),
+                LowRegisterIdent::decode_from_bitvector(&bv, 10),
+                LowRegisterIdent::decode_from_bitvector(&bv, 7),
+            )
+        } else if first_bits_match(byte_0, 0b0100_0010, 8) && first_bits_match(byte_1, 0b01_00_0000, 2){
+            Instruction::Rsbs(
+                LowRegisterIdent::decode_from_bitvector(&bv, 13),
+                LowRegisterIdent::decode_from_bitvector(&bv, 10),
+                Zero
+            )
+        } else if first_bits_match(byte_0, 0b00001_000 ,5) {
+            Instruction::LsrsImmediate5(
+                LowRegisterIdent::decode_from_bitvector(&bv ,13),
+                LowRegisterIdent::decode_from_bitvector(&bv, 10),
+                Immediate5::decode_from_bitvector(&bv, 5)
+            )
+        } else if first_bits_match(byte_0, 0, 5) {
+            Instruction::LslsImmediate5(
+                LowRegisterIdent::decode_from_bitvector(&bv ,13),
+                LowRegisterIdent::decode_from_bitvector(&bv, 10),
+                Immediate5::decode_from_bitvector(&bv, 5)
+            )
+        } else if first_bits_match(byte_0, 0b0100_0000 , 8) && first_bits_match(byte_1, 0b10_000000, 2) {
+            Instruction::Lsls(
+                LowRegisterIdent::decode_from_bitvector(&bv ,13),
+                LowRegisterIdent::decode_from_bitvector(&bv, 10),
+            )
+        } else if first_bits_match(byte_0, 0b0100_0000 , 8) && first_bits_match(byte_1, 0b11_000000, 2) {
+            Instruction::Lsrs(
+                LowRegisterIdent::decode_from_bitvector(&bv ,13),
+                LowRegisterIdent::decode_from_bitvector(&bv, 10),
             )
         } else {
             return Err(())

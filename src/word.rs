@@ -43,7 +43,8 @@ impl Word {
     }
 
     /// Shifts '1's into leftmost bits
-    pub fn arithmetic_shift_right(self, rhs: u32) -> LogicalOpResult {
+    pub fn arithmetic_shift_right(self, rhs: Word) -> LogicalOpResult {
+        let rhs: u32 = rhs.0;
         let mut word = Word(self.0 >> rhs % 32);
 
         let (carry_mask, shift_ones_mask): (u32, u32) = if rhs > 31 {
@@ -155,10 +156,11 @@ fn sub_carry() {
 }
 
 /// Logical shift
-impl Shl<u32> for Word {
+impl Shl<Word> for Word {
     type Output = LogicalOpResult;
 
-    fn shl(self, rhs: u32) -> <Self as Shl<u32>>::Output {
+    fn shl(self, rhs: Word) -> <Self as Shl<Word>>::Output {
+        let rhs: u32 = rhs.0;
         let word = Word(self.0 << rhs);
 
         let mask: u32 = if rhs > 1 {
@@ -181,7 +183,7 @@ impl Shl<u32> for Word {
 #[test]
 fn shift_left_no_carry() {
     let w = Word(1);
-    let r = w << 1;
+    let r = w << Word(1);
     assert_eq!(r.word, Word(2));
     assert!(!r.carry);
 }
@@ -189,16 +191,17 @@ fn shift_left_no_carry() {
 #[test]
 fn shift_left_carry() {
     let w = Word(u32::MAX);
-    let r = w << 1;
+    let r = w << Word(1);
     assert_eq!(r.word, Word(u32::MAX - 1));
     assert!(r.carry);
 }
 
 /// Logical shift
-impl Shr<u32> for Word {
+impl Shr<Word> for Word {
     type Output = LogicalOpResult;
 
-    fn shr(self, rhs: u32) -> <Self as Shl<u32>>::Output {
+    fn shr(self, rhs: Word) -> <Self as Shr<Word>>::Output {
+        let rhs: u32 = rhs.0;
         let word = Word(self.0 >> rhs);
 
         let mask: u32 = if rhs > 1 {
@@ -221,7 +224,7 @@ impl Shr<u32> for Word {
 #[test]
 fn shift_right_no_carry() {
     let w = Word(2);
-    let r = w >> 1;
+    let r = w >> Word(1);
     assert_eq!(r.word, Word(1));
     assert!(!r.carry);
 }
@@ -229,7 +232,7 @@ fn shift_right_no_carry() {
 #[test]
 fn shift_right_carry() {
     let w = Word(1);
-    let r = w >> 1;
+    let r = w >> Word(1);
     assert_eq!(r.word, Word(0));
     assert!(r.carry);
 }
@@ -237,7 +240,7 @@ fn shift_right_carry() {
 #[test]
 fn arithmetic_shift_right() {
     let w = Word(1);
-    let r = w.arithmetic_shift_right(1);
+    let r = w.arithmetic_shift_right(Word(1));
     assert_eq!(r.word, Word(0b10000000_00000000_00000000_00000000));
     assert!(r.carry);
 }
@@ -245,21 +248,21 @@ fn arithmetic_shift_right() {
 #[test]
 fn arithmetic_shift_right_twice() {
     let w = Word(1);
-    let r = w.arithmetic_shift_right(2);
+    let r = w.arithmetic_shift_right(Word(2));
     assert_eq!(r.word, Word(0b11000000_00000000_00000000_00000000));
     assert!(!r.carry);
 }
 #[test]
 fn arithmetic_shift_right_31() {
     let w = Word(1);
-    let r = w.arithmetic_shift_right(31);
+    let r = w.arithmetic_shift_right(Word(31));
     assert_eq!(r.word, Word(u32::MAX - 1));
     assert!(!r.carry);
 }
 #[test]
 fn arithmetic_shift_right_32() {
     let w = Word(1);
-    let r = w.arithmetic_shift_right(32);
+    let r = w.arithmetic_shift_right(Word(32));
     assert_eq!(r.word, Word(u32::MAX));
     assert!(!r.carry);
 }

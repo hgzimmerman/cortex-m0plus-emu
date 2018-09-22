@@ -153,6 +153,10 @@ impl Machine {
             Instruction::MovImmediate8(dest, immediate) => self.mov(dest, &(*immediate).into(), false),
             Instruction::MovsImmediate8(dest, immediate) => self.mov(dest, &(*immediate).into(), true),
             Instruction::Cmp(basis, compare) => self.cmp(basis, &(*compare).into()),
+            Instruction::LsrsImmediate5(dest, src, immediate) => self.shift_right(dest, src, &(*immediate).into(), true),
+            Instruction::LslsImmediate5(dest, src, immediate) => self.shift_left(dest, src, &(*immediate).into(), true),
+            Instruction::Lsls(src_dest, distance) => self.shift_left(src_dest, src_dest, &(*distance).into(), true),
+            Instruction::Lsrs(src_dest, distance) => self.shift_right(src_dest, src_dest, &(*distance).into(), true),
             Instruction::B(address) => self.branch_11(address),
         }
     }
@@ -199,6 +203,45 @@ impl Machine {
         if s {
             self.set_psr_negative(source_value & Word::MASK_31 > 0 );
             self.set_psr_zero(source_value == 0)
+        }
+    }
+
+    fn shift_right(&mut self, dest: &LowRegisterIdent, src: &LowRegisterIdent, distance: &LowRegisterOrI5Ident, s: bool) {
+        let source_value = self.get_value((*src).into());
+        let distance = self.get_value((*distance).into());
+        let r = source_value >> distance;
+        self.get_register_mut((*dest).into()).set_word(r.word);
+
+        if s {
+            self.set_psr_zero( r.word.0 == 0);
+            self.set_psr_negative(r.word.0 & Self::MASK_31 > 0);
+            self.set_psr_carry(r.carry);
+        }
+    }
+
+    fn arithmetic_shift_right(&mut self, dest: &LowRegisterIdent, src: &LowRegisterIdent, distance: &LowRegisterOrI5Ident, s: bool) {
+        let source_value = self.get_value((*src).into());
+        let distance = self.get_value((*distance).into());
+        let r = source_value.arithmetic_shift_right(distance);
+        self.get_register_mut((*dest).into()).set_word(r.word);
+
+        if s {
+            self.set_psr_zero( r.word.0 == 0);
+            self.set_psr_negative(r.word.0 & Self::MASK_31 > 0);
+            self.set_psr_carry(r.carry);
+        }
+    }
+
+    fn shift_left(&mut self, dest: &LowRegisterIdent, src: &LowRegisterIdent, distance: &LowRegisterOrI5Ident, s: bool) {
+        let src = self.get_value((*src).into());
+        let distance = self.get_value((*distance).into());
+        let r = src << distance;
+        self.get_register_mut((*dest).into()).set_word(r.word);
+
+        if s {
+            self.set_psr_zero( r.word.0 == 0);
+            self.set_psr_negative(r.word.0 & Self::MASK_31 > 0);
+            self.set_psr_carry(r.carry);
         }
     }
 
@@ -462,10 +505,10 @@ fn basic_branch() {
 #[test]
 fn load_run_instructions() {
     let mut machine = Machine::default();
-    let instructions: Vec<Instruction> = vec!(
+    let instructions: Vec<Instruction> = vec![
         Instruction::Nop,
         Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(32))
-    );
+    ];
 
     machine.load_instructions(&instructions);
     machine.run();
@@ -476,15 +519,70 @@ fn load_run_instructions() {
 #[test]
 fn load_run_instructions_1() {
     let mut machine = Machine::default();
-    let instructions: Vec<Instruction> = vec!(
+    let instructions: Vec<Instruction> = vec![
+        Instruction::MovsImmediate8(LowRegisterIdent::R0, Immediate8(0)),
         Instruction::MovsImmediate8(LowRegisterIdent::R1, Immediate8(10)),
         Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(32)),
         Instruction::Adds(LowRegisterIdent::R1, LowRegisterIdent::R1, LowRegisterIdent::R0),
-    );
+        Instruction::SubsImmediate8(LowRegisterIdent::R0, Immediate8(2))
+    ];
 
     machine.load_instructions(&instructions);
     machine.run();
 
     assert_eq!(machine.r1, Word(42));
-    assert_eq!(machine.r0, Word(32));
+    assert_eq!(machine.r0, Word(30));
+}
+
+#[test]
+fn load_run_instructions_2() {
+    let mut machine = Machine::default();
+    let instructions: Vec<Instruction> = vec![
+        Instruction::MovsImmediate8(LowRegisterIdent::R1, Immediate8(8)),
+        Instruction::Rsbs(LowRegisterIdent::R0, LowRegisterIdent::R1, Zero),
+    ];
+
+    machine.load_instructions(&instructions);
+    machine.run();
+
+    assert_eq!(machine.r1, Word(8));
+    assert_eq!(machine.r0, Word(4294967288));
+}
+
+#[test]
+fn load_run_instructions_3() {
+    let mut machine = Machine::default();
+    let instructions: Vec<Instruction> = vec![
+        Instruction::MovsImmediate8(LowRegisterIdent::R0, Immediate8(1)),
+        Instruction::LslsImmediate5(LowRegisterIdent::R0, LowRegisterIdent::R0, Immediate5(1)),
+    ];
+
+    machine.load_instructions(&instructions);
+    machine.run();
+
+    assert_eq!(machine.r0, Word(2));
+}
+
+#[test]
+fn load_run_instructions_lab_2() {
+    let mut machine = Machine::default();
+    let instructions: Vec<Instruction> = vec![
+        Instruction::MovsImmediate8(LowRegisterIdent::R1, Immediate8(5)),
+        Instruction::Rsbs(LowRegisterIdent::R0, LowRegisterIdent::R1, Zero),
+        Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(62)),
+        Instruction::MovsImmediate8(LowRegisterIdent::R1, Immediate8(9)),
+        Instruction::LsrsImmediate5(LowRegisterIdent::R1, LowRegisterIdent::R1, Immediate5(2)),
+        Instruction::Subs(LowRegisterIdent::R0, LowRegisterIdent::R0, LowRegisterIdent::R1),
+        Instruction::MovsImmediate8(LowRegisterIdent::R1, Immediate8(7) ),
+        Instruction::LslsImmediate5(LowRegisterIdent::R1, LowRegisterIdent::R1, Immediate5(3)),
+        Instruction::AddsImmediate8(LowRegisterIdent::R1, Immediate8(7)),
+        Instruction::Subs(LowRegisterIdent::R0, LowRegisterIdent::R0, LowRegisterIdent::R1),
+        Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(58)),
+        Instruction::AddsImmediate8(LowRegisterIdent::R0, Immediate8(17)),
+    ];
+
+    machine.load_instructions(&instructions);
+    machine.run();
+
+    assert_eq!(machine.r0, Word(67));
 }
