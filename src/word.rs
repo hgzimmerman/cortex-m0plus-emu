@@ -23,8 +23,9 @@ impl Word {
         Word(self.0 ^ u32::MAX)
     }
 
+    /// An add with the ability to carry in a value.
+    /// This allows things like multi-word additions.
     pub fn add_with_carry(self, rhs: Word, carry_in: bool) -> OpResult {
-
         let carry_bit = if carry_in {
             1
         } else {

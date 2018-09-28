@@ -3,6 +3,7 @@ use word::Word;
 use value::ZeroExtendable;
 use value::ByteCodeEncodable;
 
+/// 11 bits number as represented in an instruction.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Immediate11(pub u16);
 impl ByteCodeEncodable for Immediate11 {

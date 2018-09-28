@@ -3,6 +3,7 @@ use bit_vec::BitVec;
 use value::ZeroExtendable;
 use word::Word;
 
+/// 3 bit number as represented in an instruction.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Immediate3(pub u8);
 impl ByteCodeEncodable for Immediate3 {

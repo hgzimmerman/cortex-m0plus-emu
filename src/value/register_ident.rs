@@ -1,4 +1,7 @@
 /// Superset of all register combinations
+///
+/// This is a base level abstraction that allows Machine::get_value() to return a meaningful Word.
+/// That word can then be used in some given operation.
 #[derive(Clone, Copy, Debug)]
 pub enum RegisterIdent {
     R0,
@@ -17,6 +20,5 @@ pub enum RegisterIdent {
     StackRegister,
     LinkRegister,
     ProgramCounter,
-    /// Abstract other thing
     Word(u32)
 }

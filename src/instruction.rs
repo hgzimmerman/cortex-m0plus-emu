@@ -1,4 +1,4 @@
-use label::NumLabel;
+//use label::NumLabel;
 
 use bit_vec::BitVec;
 
@@ -42,7 +42,7 @@ pub enum Instruction {
 
 impl Into<BitVec> for Instruction {
     fn into(self) -> BitVec {
-        use Instruction::*;
+        use instruction::Instruction::*;
         match self {
             Nop => {
                 const NOP_OP: u8 = 0b1011_1111;

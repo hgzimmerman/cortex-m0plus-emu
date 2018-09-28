@@ -5,6 +5,7 @@ use value::ByteCodeEncodable;
 use value::register_ident::RegisterIdent;
 use value::low_register_ident::LowRegisterIdent;
 
+/// 8 bit number as represented in an instruction.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Immediate8(pub u8);
 impl ByteCodeEncodable for Immediate8 {

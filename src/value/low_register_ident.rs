@@ -2,6 +2,9 @@ use value::ByteCodeEncodable;
 use bit_vec::BitVec;
 use value::register_ident::RegisterIdent;
 
+/// A restricted set of registers that can be represented by 3 bits when serialized.
+/// This is a common set of registers to work with due to being able to fit 3 in 9 bits
+/// or one and a meaningfully sized immediate.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LowRegisterIdent {
     R0,
@@ -21,7 +24,7 @@ impl ByteCodeEncodable for LowRegisterIdent {
         let mut bit_1: bool = false;
         let mut bit_2: bool = false;
         let mut bit_3: bool = false;
-        use LowRegisterIdent::*;
+        use self::LowRegisterIdent::*;
         match self {
             R0 => {},
             R1 => {bit_3 = true},
@@ -42,7 +45,7 @@ impl ByteCodeEncodable for LowRegisterIdent {
                                         bit_vec.get(offset + 1).expect("Should be inbounds"),
                                         bit_vec.get(offset + 2).expect("Should be inbounds"));
 
-        use LowRegisterIdent::*;
+        use self::LowRegisterIdent::*;
         match bits {
             (false, false, false) => R0,
             (false, false, true) => R1,

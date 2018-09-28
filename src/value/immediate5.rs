@@ -3,6 +3,7 @@ use value::register_ident::RegisterIdent;
 use bit_vec::BitVec;
 use value::ByteCodeEncodable;
 
+/// 5 bit number as represented in an instruction.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Immediate5(pub u8);
 impl ByteCodeEncodable for Immediate5 {
