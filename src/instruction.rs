@@ -1,18 +1,24 @@
-use register::LowRegisterIdent;
-use register::LowRegisterOrI8Ident;
-use register::RegisterIdent;
-use register::Zero;
+//use register::LowRegisterIdent;
+//use register::LowRegisterOrI8Ident;
+//use register::RegisterIdent;
+//use register::Zero;
 use label::NumLabel;
 
 //use std::collections::BitVec;
 use bit_vec::BitVec;
-use register::Immediate8;
-use register::Immediate11;
+//use register::Immediate8;
+//use register::Immediate11;
 
-use register::ByteCodeEncodable;
+//use register::ByteCodeEncodable;
 use std::convert::TryFrom;
 use std::convert::TryInto;
-use register::Immediate5;
+//use register::Immediate5;
+use value::low_register_ident::LowRegisterIdent;
+use value::immediate8::Immediate8;
+use value::immediate5::Immediate5;
+use value::Zero;
+use value::immediate11::Immediate11;
+use value::ByteCodeEncodable;
 
 /// The naming convention will specify both non-s and s variants.
 /// Instructions without any suffixes will typically operate on registers, while those that operate on immediate values will have a suffix saying so.

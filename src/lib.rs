@@ -5,18 +5,30 @@ extern crate bit_vec;
 
 use std::u32;
 mod instruction;
-mod register;
+//mod register;
 mod label;
 mod word;
 mod util;
+mod value;
+
+
 use instruction::Instruction;
-use register::*;
+//use register::*;
 use label::NumLabel;
 use word::Word;
 use bit_vec::BitVec;
 use std::ops::Index;
 use word::OpResult;
 use std::convert::TryFrom;
+use value::low_register_ident::LowRegisterIdent;
+use value::ZeroExtendable;
+use value::register_ident::RegisterIdent;
+use value::Zero;
+use value::immediate8::Immediate8;
+use value::immediate11::Immediate11;
+use value::immediate8::LowRegisterOrI8Ident;
+use value::immediate5::LowRegisterOrI5Ident;
+use value::immediate5::Immediate5;
 
 const INSTRUCTIONS_SIZE: usize = 256;
 
@@ -78,11 +90,11 @@ impl Default for Machine {
     }
 }
 
-impl Index<usize> for Machine {
-    type Output = u32;
+impl Index<u32> for Machine {
+    type Output = BitVec<u32>;
 
-    fn index(&self, index: usize) -> &<Self as Index<usize>>::Output {
-        unimplemented!()
+    fn index(&self, index: u32) -> &BitVec<u32> {
+        unimplemented!();
     }
 }
 
@@ -157,7 +169,7 @@ impl Machine {
             Instruction::LslsImmediate5(dest, src, immediate) => self.shift_left(dest, src, &(*immediate).into(), true),
             Instruction::Lsls(src_dest, distance) => self.shift_left(src_dest, src_dest, &(*distance).into(), true),
             Instruction::Lsrs(src_dest, distance) => self.shift_right(src_dest, src_dest, &(*distance).into(), true),
-            Instruction::B(address) => self.branch_11(address),
+            Instruction::B(address) => self.branch(address),
         }
     }
 
@@ -259,10 +271,11 @@ impl Machine {
         self.set_psr_negative(dest_register.0 & Word::MASK_31 > 0);
     }
 
-    fn branch_11(&mut self, address: &Immediate11) {
-        let address: u32 = address.0 as u32;
-        self.program_counter.0 = address;
+    fn branch<T: ZeroExtendable>(&mut self, address: &T) {
+        let address: Word = address.zero_extend();
+        self.program_counter.0 = address.0;
     }
+
 
 
     /// Gets the value of a register, this will act independently of the stored value.
@@ -286,7 +299,6 @@ impl Machine {
             RegisterIdent::LinkRegister => self.link_register,
             RegisterIdent::ProgramCounter => self.program_counter,
             RegisterIdent::Word(word) => Word(word),
-//            RegisterIdent::Ident(label_index) => Word(self.rom_consts[label_index.0 as usize])
         }
     }
 
@@ -310,7 +322,6 @@ impl Machine {
             RegisterIdent::LinkRegister => &mut self.link_register,
             RegisterIdent::ProgramCounter => &mut self.program_counter,
             RegisterIdent::Word(_word) => panic!(),
-//            RegisterIdent::Ident(_label_index) => panic!()
         }
     }
 
@@ -396,8 +407,8 @@ impl Machine {
             self.program_status_register.0 &= Self::O_MASK ^ Self::FULL_MASK
         }
     }
-
 }
+
 
 #[test]
 fn movs_works() {

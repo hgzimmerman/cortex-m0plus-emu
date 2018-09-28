@@ -1,10 +1,15 @@
 use label::NumLabel;
 use bit_vec::BitVec;
+use word::Word;
 
 
 pub trait ByteCodeEncodable {
     fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize);
     fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self;
+}
+
+pub trait ZeroExtendable {
+    fn zero_extend(&self) -> Word;
 }
 
 /// Superset of all register combinations
@@ -110,7 +115,35 @@ impl ByteCodeEncodable for Immediate8 {
         target
     }
 }
-
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Immediate3(pub u8);
+impl ByteCodeEncodable for Immediate3 {
+    /// Sets bits in a bitvector to encode the value of the immediate 8.
+    /// The offset specifies where to start placing bits in the bit_vec.
+    #[inline(always)]
+    fn encode_to_bitvector(&self, bit_vec: &mut BitVec<u32>, offset: usize) {
+        let bv = BitVec::from_bytes(&[self.0]);
+        (0..3_usize).for_each(|index| {
+            bit_vec.set(index + offset, bv.get(index + 5 ).expect(&format!("Should be inbounds {}", index + offset)));
+        });
+    }
+    fn decode_from_bitvector(bit_vec: &BitVec<u32>, offset: usize) -> Self {
+        let mut target = Immediate3(0);
+        (0..3_usize).for_each(|index| {
+            if let Some(bit) = bit_vec.get(index + offset) {
+                if bit {
+                    target.0 |= ::util::u8_bit_select_mask(2 - index as u8) // TODO??? check for correctness
+                }
+            }
+        });
+        target
+    }
+}
+impl ZeroExtendable for Immediate3 {
+    fn zero_extend(&self) -> Word {
+        Word(self.0 as u32)
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Immediate5(pub u8);
@@ -134,6 +167,11 @@ impl ByteCodeEncodable for Immediate5 {
             }
         });
         target
+    }
+}
+impl ZeroExtendable for Immediate8 {
+    fn zero_extend(&self) -> Word {
+        Word(self.0 as u32)
     }
 }
 
@@ -163,6 +201,11 @@ impl ByteCodeEncodable for Immediate11 {
         target
     }
 }
+impl ZeroExtendable for Immediate11 {
+    fn zero_extend(&self) -> Word {
+        Word(self.0 as u32)
+    }
+}
 
 impl Into<RegisterIdent> for LowRegisterIdent {
     fn into(self) -> RegisterIdent {
@@ -190,7 +233,6 @@ pub enum LowRegisterOrI8Ident {
     R7,
     /// A byte is allowed to be used
     I8(Immediate8),
-//    Ident(NumLabel)
 }
 
 impl Into<RegisterIdent> for LowRegisterOrI8Ident {
@@ -205,8 +247,6 @@ impl Into<RegisterIdent> for LowRegisterOrI8Ident {
             LowRegisterOrI8Ident::R6 => RegisterIdent::R6,
             LowRegisterOrI8Ident::R7 => RegisterIdent::R7,
             LowRegisterOrI8Ident::I8(byte) => RegisterIdent::Word(byte.0 as u32),
-//            LowRegisterOrI8Ident::Ident(label) => RegisterIdent::Ident(label)
-
         }
     }
 }
