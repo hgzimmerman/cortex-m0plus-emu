@@ -1,18 +1,9 @@
-//use register::LowRegisterIdent;
-//use register::LowRegisterOrI8Ident;
-//use register::RegisterIdent;
-//use register::Zero;
 use label::NumLabel;
 
-//use std::collections::BitVec;
 use bit_vec::BitVec;
-//use register::Immediate8;
-//use register::Immediate11;
 
-//use register::ByteCodeEncodable;
 use std::convert::TryFrom;
 use std::convert::TryInto;
-//use register::Immediate5;
 use value::low_register_ident::LowRegisterIdent;
 use value::immediate8::Immediate8;
 use value::immediate5::Immediate5;

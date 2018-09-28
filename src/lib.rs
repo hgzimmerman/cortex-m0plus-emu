@@ -5,7 +5,6 @@ extern crate bit_vec;
 
 use std::u32;
 mod instruction;
-//mod register;
 mod label;
 mod word;
 mod util;
@@ -13,7 +12,6 @@ mod value;
 
 
 use instruction::Instruction;
-//use register::*;
 use label::NumLabel;
 use word::Word;
 use bit_vec::BitVec;
